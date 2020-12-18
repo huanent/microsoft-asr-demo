@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="microsoft.cognitiveservices.speech.sdk.bundle.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div>
+        <label>key</label>
+        <input v-model="key" />
+      </div>
+      <div>
+        <label>region</label>
+        <input v-model="region" />
+      </div>
+      <div>
+        <button @click="start">start</button>
+        <button @click="stop">stop</button>
+      </div>
+      <p v-for="(item,index) in recognized" :key="index">{{item}}</p>
+      <p>{{recognizing}}</p>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          recognizing: "",
+          recognized: [],
+          key: "5fdf7d4cc47e404592f0dee167a35df7",
+          region: "westus2",
+          recognizer: null,
+        },
+        methods: {
+          start() {
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+              this.key,
+              this.region
+            );
+
+            speechConfig.speechRecognitionLanguage = "en-US";
+            
+            let audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+
+            this.recognizer = new SpeechSDK.SpeechRecognizer(
+              speechConfig,
+              audioConfig
+            );
+
+            this.recognizer.recognizing = (s, e) => {
+              this.recognizing = e.result.text;
+            };
+
+            this.recognizer.recognized = (s, e) => {
+              this.recognizing = "";
+              if (e.result.reason == SpeechSDK.ResultReason.NoMatch) {
+                this.recognized.push("-----NoMatch-----");
+              } else {
+                this.recognized.push(e.result.text);
+              }
+            };
+
+            this.recognizer.startContinuousRecognitionAsync();
+            this.recognized.push("start")
+          },
+          stop() {
+            this.recognizer.stopContinuousRecognitionAsync(
+              this.closeRecognizer,
+              this.closeRecognizer
+            );
+          },
+          closeRecognizer() {
+            this.recognizer.close();
+            this.recognized.push("stop")
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
